@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>資二二｜題組抽籤分配</title>
+<style>
+:root{font-family:system-ui,"Microsoft JhengHei",sans-serif;color:#372d26;background:#f7f3ed}*{box-sizing:border-box}body{margin:0;padding:24px 14px}.wrap{max-width:1050px;margin:auto}.hero{background:linear-gradient(120deg,#6d4935,#a16a42);padding:28px;border-radius:22px;color:white}.hero h1{margin:0;font-size:clamp(25px,4vw,34px)}.hero p{opacity:.9;margin-bottom:0}.panel{background:white;border:1px solid #e7dcd1;border-radius:18px;padding:22px;margin-top:18px;box-shadow:0 5px 20px #7351390a}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.stat{background:#f5eee6;padding:14px;border-radius:12px;text-align:center}.stat b{font-size:25px;display:block;color:#814c31}.muted{color:#76675c}.actions{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}button{border:0;border-radius:11px;padding:12px 18px;background:#925837;color:#fff;font-size:16px;font-weight:700;cursor:pointer}button.secondary{background:#eee5da;color:#684732}button:disabled{opacity:.5;cursor:not-allowed}table{border-collapse:collapse;width:100%}th,td{text-align:left;border-bottom:1px solid #eee5da;padding:11px}th{background:#f5eee6}tr:nth-child(even){background:#fffcf9}.group{font-weight:750;color:#905735}.scroll{overflow:auto}.start-row{background:#6b3526!important;color:#fff;box-shadow:inset 5px 0 #ffcc75}.start-row td{border-bottom-color:#986c57;font-weight:800}.start-row .group{color:#ffdf89}.start-pill{display:inline-block;background:#f9d583;color:#5a291b;border-radius:99px;padding:4px 10px;font-weight:900;margin-left:6px}.draw-stage{margin:16px 0 2px;padding:20px;border:2px solid #e3b985;border-radius:18px;background:linear-gradient(135deg,#fff4df,#f9dfc3);text-align:center;display:none}.draw-stage.active{display:block;animation:enter .3s ease-out}.draw-number{font-size:clamp(45px,8vw,78px);font-weight:900;color:#843f22;font-variant-numeric:tabular-nums}.draw-stage.revealed{background:linear-gradient(125deg,#693524,#975535);color:white}.draw-stage.revealed .draw-number{color:#ffe8a5;animation:pop .5s ease-out}.draw-label{font-weight:700}.start-row{animation:flash 1s ease-out}@keyframes enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}@keyframes pop{0%{transform:scale(.7)}70%{transform:scale(1.13)}100%{transform:scale(1)}}@keyframes flash{0%{filter:brightness(1.7)}100%{filter:brightness(1)}}#empty{text-align:center;padding:42px 12px;color:#89796d}.notice{padding:12px 16px;background:#fff1db;border-radius:12px}.small{font-size:13px}@media(max-width:550px){.stats{gap:6px}.stat{padding:10px 3px}.stat b{font-size:20px}th,td{padding:9px 5px;font-size:14px}.hero{padding:22px}}@media print{.draw-stage{display:none!important}.start-row{background:#e8dfd8!important;color:#111!important}.start-row .group{color:#111!important}.start-pill{color:#111;background:#ddd}body{background:#fff;padding:0}.hero{color:#222;background:none;padding:5px}.actions,.notice,.noprint{display:none!important}.panel{box-shadow:none;border:0;margin:0;padding:8px}}
+</style></head><body><main class="wrap"><header class="hero"><h1>🎲 資二二｜題組抽籤分配</h1><p>隨機抽出起始座號，接著按座號依序分配題組二～十五；不使用題組一。</p></header>
+<section class="panel"><div class="stats"><div class="stat"><b id="studentCount">36</b><span>參與同學</span></div><div class="stat"><b>14</b><span>題組（2～15）</span></div><div class="stat"><b id="assigned">0</b><span>已分配人數</span></div></div>
+<div class="actions"><button id="draw">🎲 開始抽籤（動畫揭曉）</button><button class="secondary" id="csv" disabled>⬇ 下載 CSV 結果</button><button class="secondary" id="print" disabled>🖨 列印</button></div>
+<div id="drawStage" class="draw-stage" role="status" aria-live="polite"><div id="drawLabel" class="draw-label">正在抽出起始座號...</div><div id="drawNumber" class="draw-number">--</div><div id="drawName"></div></div><div class="notice small">規則：只抽「起始座號」一次，例如抽中 07 號，則 07 號分配題組二、08 號題組三，之後依座號遞增（跳過不參與的 05 號與沒有姓名的 17 號），超過 38 號回到 01 號；題組十五之後回到題組二。</div>
+</section><section class="panel"><h2>📋 抽籤結果</h2><p id="status" class="muted">尚未抽籤</p><div class="scroll"><table id="table" hidden><thead><tr><th>座號</th><th>姓名</th><th>題組</th><th>分配順序</th></tr></thead><tbody id="rows"></tbody></table></div><div id="empty">請按上方「開始抽籤（動畫揭曉）」，產生全班題組名單。</div></section><p class="muted small noprint">名單由老師提供之資二二學生資料建立，已排除 05 號（休學）及 17 號（無姓名）。結果會儲存在本瀏覽器，不會自動上傳 Google 試算表；請下載 CSV 保存。</p></main>
+<script>
+const STUDENTS = [{"seat": "01", "name": "余亞宸"}, {"seat": "02", "name": "余宥霆"}, {"seat": "03", "name": "李良能"}, {"seat": "04", "name": "林子元"}, {"seat": "06", "name": "姜柏宇"}, {"seat": "07", "name": "馬綜鍏"}, {"seat": "08", "name": "張紘鈞"}, {"seat": "09", "name": "許皓鈞"}, {"seat": "10", "name": "陳渤林"}, {"seat": "11", "name": "陳濬玹"}, {"seat": "12", "name": "曾兆生"}, {"seat": "13", "name": "游秉軒"}, {"seat": "14", "name": "游淮恩"}, {"seat": "15", "name": "黃彥鈞"}, {"seat": "16", "name": "黃智暐"}, {"seat": "18", "name": "劉浩廷"}, {"seat": "19", "name": "劉尉能"}, {"seat": "20", "name": "黎晉豪"}, {"seat": "21", "name": "謝定軒"}, {"seat": "22", "name": "古語喬"}, {"seat": "23", "name": "李宸妡"}, {"seat": "24", "name": "林巧芯"}, {"seat": "25", "name": "林立敏"}, {"seat": "26", "name": "林佑欣"}, {"seat": "27", "name": "林芷安"}, {"seat": "28", "name": "邱衣翎"}, {"seat": "29", "name": "張晏欣"}, {"seat": "30", "name": "張愷恬"}, {"seat": "31", "name": "傅羿榛"}, {"seat": "32", "name": "曾葦如"}, {"seat": "33", "name": "黃子芮"}, {"seat": "34", "name": "劉伍銚"}, {"seat": "35", "name": "劉珮臻"}, {"seat": "36", "name": "蔡易昀"}, {"seat": "37", "name": "羅湘妮"}, {"seat": "38", "name": "龔姵綺"}];
+const STORAGE_KEY='class422_group_draw_start_v3_exclude05';
+let results=[];let spinning=false;
+const el=id=>document.getElementById(id);
+function randomIndex(max){
+  if(window.crypto && window.crypto.getRandomValues){
+    // Rejection sampling avoids modulo bias.
+    const limit=Math.floor(4294967296/max)*max;
+    const v=new Uint32Array(1);
+    do{window.crypto.getRandomValues(v)}while(v[0]>=limit);
+    return v[0]%max;
+  }
+  return Math.floor(Math.random()*max);
+}
+function draw(){
+ if(spinning)return;
+ if(results.length&&!confirm('確定要重新抽籤起始座號嗎？原本的分配將被取代。'))return;
+ const ordered=[...STUDENTS].sort((a,b)=>Number(a.seat)-Number(b.seat));
+ const chosen=randomIndex(ordered.length);
+ const stage=el('drawStage');stage.className='draw-stage active';
+ el('drawLabel').textContent='正在抽出起始座號...';el('drawName').textContent='';
+ spinning=true;el('draw').disabled=true;
+ let ticks=0;
+ const timer=setInterval(()=>{
+   const s=ordered[randomIndex(ordered.length)];
+   el('drawNumber').textContent=s.seat;
+   ticks++;
+   if(ticks>=22){
+     clearInterval(timer);
+     const starter=ordered[chosen];
+     el('drawNumber').textContent=starter.seat;
+     el('drawName').textContent=starter.name+'｜題組二';
+     el('drawLabel').textContent='🎉 抽籤起點揭曉！';
+     stage.classList.add('revealed');
+     const sequence=ordered.slice(chosen).concat(ordered.slice(0,chosen));
+     results=sequence.map((s,i)=>({...s,order:i+1,group:(i%14)+2,start:i===0}));
+     try{localStorage.setItem(STORAGE_KEY,JSON.stringify(results));}catch(e){}
+     spinning=false;el('draw').disabled=false;
+     render();
+     if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+     stage.animate([{transform:'scale(1)'},{transform:'scale(1.025)'},{transform:'scale(1)'}],{duration:500,easing:'ease-out'});
+   }
+ },65);
+}
+function render(){
+ el('studentCount').textContent=STUDENTS.length;
+ el('assigned').textContent=results.length;
+ el('empty').hidden=results.length>0;
+ el('table').hidden=results.length===0;
+ el('csv').disabled=el('print').disabled=results.length===0;
+ const start=results.find(r=>r.order===1);
+ el('status').textContent=results.length?`已抽出起點：${start.seat} 號 ${start.name}（題組二）；其餘同學依座號順序分配。下表按座號排序。`:'尚未抽籤';
+ el('rows').replaceChildren();
+ const sorted=[...results].sort((a,b)=>Number(a.seat)-Number(b.seat));
+ for(const r of sorted){
+   const tr=document.createElement('tr');
+   for(const val of [r.seat,r.name,'題組'+toChinese(r.group),r.start?'第 1 位（起點）':'第 '+r.order+' 位']){
+     const td=document.createElement('td');td.textContent=val;
+     if(String(val).startsWith('題組'))td.className='group';
+     tr.appendChild(td);
+   }
+   if(r.start){tr.classList.add('start-row');tr.lastChild.innerHTML='';const pill=document.createElement('span');pill.className='start-pill';pill.textContent='★ 起點・第 1 位';tr.lastChild.appendChild(pill);}
+   el('rows').appendChild(tr);
+ }
+}
+function toChinese(n){return ['','一','二','三','四','五','六','七','八','九','十','十一','十二','十三','十四','十五'][n]}
+function downloadCSV(){const lines=[['座號','姓名','題組','分配順序'],...[...results].sort((a,b)=>Number(a.seat)-Number(b.seat)).map(r=>[r.seat,r.name,'題組'+toChinese(r.group),r.order])];const csv='\uFEFF'+lines.map(row=>row.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='資二二_座號順序題組分配.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+el('draw').onclick=draw;el('csv').onclick=downloadCSV;el('print').onclick=()=>window.print();
+try{const prior=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');if(Array.isArray(prior)&&prior.length===STUDENTS.length&&prior.every(x=>STUDENTS.some(s=>s.seat===x.seat&&s.name===x.name)&&Number.isInteger(x.group)&&x.group>=2&&x.group<=15))results=prior;}catch(e){}
+render();
+</script></body></html>
